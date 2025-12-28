@@ -22,7 +22,9 @@ jobs:
         run: npm install
 
       - name: Run React optimization script
-        run: bash scripts/react-optimize.sh
+        run: |
+          chmod +x scripts/react-optimize.sh
+          ./scripts/react-optimize.sh
 
       - name: Build React (ignore eslint warnings)
         run: CI=false npm run build
@@ -30,12 +32,12 @@ jobs:
       - name: Install Capacitor
         run: npm install @capacitor/android @capacitor/cli
 
-      - name: Init Capacitor (if needed)
+      - name: Ensure Android platform exists
         run: |
-          if [ ! -f capacitor.config.json ]; then
-            npx cap init DZIDICI3 com.dzidici.app
+          if [ ! -d android ]; then
+            npx cap add android
           fi
-          npx cap add android || true
+          npx cap sync android
 
       - name: Copy web assets
         run: npx cap copy android
@@ -47,7 +49,7 @@ jobs:
           java-version: 21
           cache: gradle
 
-      # 🔥 OVO JE KLJUČNI FIX ZA KOTLIN DUPLIKATE
+      # 🔥 Fix za Kotlin duplikate
       - name: Force single Kotlin version
         run: |
           cat <<'EOF' >> android/build.gradle
