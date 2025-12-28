@@ -23,10 +23,13 @@ jobs:
           node-version: 18
           cache: npm
 
-      - name: Install dependencies
+      - name: Install npm dependencies
         run: npm install
 
-      - name: Build React app (ignore ESLint warnings)
+      - name: Install Capacitor CLI locally
+        run: npm install @capacitor/cli @capacitor/android
+
+      - name: Build React app
         run: npm run build
 
       - name: Setup Java 17
@@ -35,7 +38,7 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Capacitor sync
+      - name: Capacitor sync android
         run: npx cap sync android
 
       - name: Build Debug APK
