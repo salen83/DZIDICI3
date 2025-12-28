@@ -1,4 +1,4 @@
-name: Build APK
+name: Build Android APK
 
 on:
   push:
@@ -8,36 +8,43 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: "20"
 
       - name: Install dependencies
         run: npm install
 
-      - name: Install global packages
-        run: npm install -g ionic @capacitor/cli
-
-      - name: Install Capacitor Android
-        run: npm install @capacitor/android
-
       - name: Build React app
-        run: CI=false npm run build
+        run: |
+          # Ignoriši ESLint warnings da ne stane CI
+          CI=false npm run build
 
-      - name: Copy web assets to Capacitor
+      - name: Install Capacitor CLI globally
+        run: npm install -g @capacitor/cli
+
+      - name: Install Capacitor Android platform
+        run: |
+          npm install @capacitor/android
+          # Inicijalizacija Capacitor-a samo ako ne postoji config
+          if [ ! -f "capacitor.config.json" ]; then
+            npx cap init myApp com.example.myapp
+          fi
+          npx cap add android || echo "Android platform already added"
+
+      - name: Copy web build to Android
         run: npx cap copy android
 
-      - name: Build Android APK
-        run: |
-          cd android
-          ./gradlew assembleDebug
+      - name: Build APK
+        working-directory: android
+        run: ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
