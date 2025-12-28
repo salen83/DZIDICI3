@@ -3,7 +3,7 @@ set -e
 
 echo "🔧 React performance optimization started..."
 
-# 1️⃣ Forsiraj production build (isključi source maps)
+# 1️⃣ Forsiraj production build
 if [ -f node_modules/react-scripts/config/webpack.config.js ]; then
   sed -i 's/sourceMap: true/sourceMap: false/g' node_modules/react-scripts/config/webpack.config.js || true
 fi
@@ -13,16 +13,16 @@ find src -type f -name "*.js" -exec sed -i 's/console.log/\/\/console.log/g' {} 
 
 # 3️⃣ React.memo hint (ne dira logiku)
 grep -rl "function Screen" src | while read file; do
-  if ! grep -q "React.memo" "$file"; then
+  # Dodaj import samo ako ne postoji
+  if ! grep -q "^import React" "$file"; then
     sed -i '1s/^/import React from "react";\n/' "$file"
+  fi
+
+  # Wrapuj export sa React.memo samo ako nije već
+  if ! grep -q "React.memo" "$file"; then
     sed -i 's/export default/export default React.memo(/' "$file"
     echo ")" >> "$file"
   fi
 done
-
-# 4️⃣ Preload heavy lists hint (samo placeholder, ne dira logiku)
-# grep -rl "map(" src | while read file; do
-#   sed -i 's/map(/map(/g' "$file"
-# done
 
 echo "✅ Optimization finished"
