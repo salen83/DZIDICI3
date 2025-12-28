@@ -1,9 +1,8 @@
-name: Build Android App
+name: Build Android APK
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -13,35 +12,46 @@ jobs:
     env:
       CI: false
       ESLINT_NO_DEV_ERRORS: true
-      JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.17-10/x64
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
+          cache: npm
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
 
       - name: Install dependencies
-        run: |
-          npm install
-          npm install -g ionic @capacitor/cli
+        run: npm install
 
-      - name: Ensure Capacitor Android platform
+      - name: Build React app
+        run: npm run build
+
+      - name: Ensure Capacitor Android
         run: |
           npm install @capacitor/android
-          npx cap add android || echo "Android platform already added"
+          npx cap add android || echo "Android already added"
           npx cap sync android
           npx cap copy android
 
-      - name: Build React app
-        run: |
-          npm run build || true   # ignore ESLint warnings/errors
-
-      - name: Build Android APK
+      - name: Grant Gradle permissions
         working-directory: android
-        run: |
-          chmod +x ./gradlew
-          ./gradlew assembleDebug
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
