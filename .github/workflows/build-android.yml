@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build APK
 
 on:
   push:
@@ -8,44 +8,38 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
 
-    - name: Install dependencies
-      run: |
-        npm install
-        npm install -g ionic @capacitor/cli
+      - name: Install dependencies
+        run: npm install -g ionic @capacitor/cli && npm install
 
-    - name: Build React App
-      run: |
-        npm run build
+      - name: Build React App
+        run: |
+          CI=false npm run build
 
-    - name: Add Android platform
-      run: |
-        npx cap add android || true
+      - name: Add Capacitor Android
+        run: |
+          npx cap add android || echo "Android platform already added"
 
-    - name: Sync Capacitor
-      run: |
-        npx cap sync android
+      - name: Copy web build to Capacitor
+        run: npx cap copy
 
-    - name: Build APK
-      run: |
-        npx cap open android
-        # Alternativa CLI build bez otvaranja Android Studija:
-        cd android
-        ./gradlew assembleRelease
-        cd ..
+      - name: Build APK
+        run: |
+          cd android
+          ./gradlew assembleDebug
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-release.apk
-        path: android/app/build/outputs/apk/release/app-release.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
