@@ -1,35 +1,15 @@
-<<<<<<< HEAD
-// android/build.gradle
-buildscript {
-=======
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
-
 buildscript {
-    
->>>>>>> 6d7d4b2 (Add Android native project)
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-<<<<<<< HEAD
-        classpath "com.android.tools.build:gradle:8.1.1"
+        classpath 'com.android.tools.build:gradle:8.1.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22"
     }
 }
 
-=======
-        classpath 'com.android.tools.build:gradle:8.13.0'
-        classpath 'com.google.gms:google-services:4.4.4'
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-    }
-}
-
-apply from: "variables.gradle"
-
->>>>>>> 6d7d4b2 (Add Android native project)
 allprojects {
     repositories {
         google()
@@ -37,17 +17,6 @@ allprojects {
     }
 }
 
-<<<<<<< HEAD
-subprojects {
-    configurations.all {
-        resolutionStrategy {
-            force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"
-        }
-    }
-=======
 task clean(type: Delete) {
     delete rootProject.buildDir
->>>>>>> 6d7d4b2 (Add Android native project)
 }
