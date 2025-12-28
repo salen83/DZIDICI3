@@ -21,7 +21,7 @@ jobs:
       - name: Install npm deps
         run: npm install
 
-      - name: React performance optimization
+      - name: Run React optimization script
         run: bash scripts/react-optimize.sh
 
       - name: Build React (ignore eslint warnings)
@@ -46,6 +46,22 @@ jobs:
           distribution: temurin
           java-version: 21
           cache: gradle
+
+      # 🔥 OVO JE KLJUČNI FIX ZA KOTLIN DUPLIKATE
+      - name: Force single Kotlin version
+        run: |
+          cat <<'EOF' >> android/build.gradle
+
+          subprojects {
+            configurations.all {
+              resolutionStrategy {
+                force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
+                force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22"
+                force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"
+              }
+            }
+          }
+          EOF
 
       - name: Build Debug APK
         working-directory: android
