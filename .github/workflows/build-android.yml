@@ -33,11 +33,17 @@ jobs:
       - name: Install Capacitor Android platform
         run: |
           npm install @capacitor/android
-          # Inicijalizacija Capacitor-a samo ako ne postoji config
           if [ ! -f "capacitor.config.json" ]; then
             npx cap init myApp com.example.myapp
           fi
           npx cap add android || echo "Android platform already added"
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
 
       - name: Copy web build to Android
         run: npx cap copy android
