@@ -17,10 +17,10 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: npm
 
       - name: Setup Java 17
@@ -35,9 +35,11 @@ jobs:
       - name: Build React app
         run: npm run build
 
-      - name: Ensure Capacitor Android
+      - name: Install Capacitor CLI locally
+        run: npm install @capacitor/cli @capacitor/android
+
+      - name: Ensure Android platform
         run: |
-          npm install @capacitor/android
           npx cap add android || echo "Android already added"
           npx cap sync android
           npx cap copy android
