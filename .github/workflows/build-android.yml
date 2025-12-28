@@ -26,7 +26,7 @@ jobs:
       - name: Install npm dependencies
         run: npm install
 
-      - name: Install Capacitor CLI locally
+      - name: Install Capacitor
         run: npm install @capacitor/cli @capacitor/android
 
       - name: Build React app
@@ -38,7 +38,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Capacitor sync android
+      - name: Ensure Android platform exists
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+
+      - name: Capacitor sync
         run: npx cap sync android
 
       - name: Build Debug APK
