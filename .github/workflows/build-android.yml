@@ -1,13 +1,13 @@
-name: Build Android APK
+name: Android Build
 
 on:
   push:
-    branches: [main]
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repo
@@ -16,56 +16,33 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
+          cache: npm
 
-      - name: Install npm deps
+      - name: Install dependencies
         run: npm install
 
-      - name: Build React (ignore eslint warnings)
-        run: CI=false npm run build
+      - name: Build web app
+        run: npm run build
 
-      - name: Install Capacitor
-        run: npm install @capacitor/android @capacitor/cli
-
-      - name: Init Capacitor (if needed)
-        run: |
-          if [ ! -f capacitor.config.json ]; then
-            npx cap init DZIDICI3 com.dzidici.app
-          fi
-          npx cap add android || true
-
-      - name: Copy web assets
-        run: npx cap copy android
-
-      - name: Setup Java 21
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
-          cache: gradle
+          java-version: 17
 
-      # 🔥 OVO JE KLJUČNI FIX ZA KOTLIN DUPLIKATE
-      - name: Force single Kotlin version
+      - name: Sync Capacitor
         run: |
-          cat <<'EOF' >> android/build.gradle
-
-          subprojects {
-            configurations.all {
-              resolutionStrategy {
-                force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
-                force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22"
-                force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"
-              }
-            }
-          }
-          EOF
+          npx cap sync android
 
       - name: Build Debug APK
-        working-directory: android
-        run: ./gradlew assembleDebug
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: DZIDICI3-debug-apk
+          name: app-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
