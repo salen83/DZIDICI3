@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK (Debug-Friendly)
 
 on:
   push:
@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    env:
+      LOG_FILE: build.log
 
     steps:
       - name: Checkout repo
@@ -27,7 +29,8 @@ jobs:
           ./scripts/react-optimize.sh
 
       - name: Build React (ignore eslint warnings)
-        run: CI=false npm run build || echo "React build failed – continuing"
+        run: |
+          CI=false npm run build || echo "React build failed – continuing"
 
       - name: Install Capacitor
         run: npm install @capacitor/android @capacitor/cli
@@ -56,15 +59,19 @@ jobs:
           }
           EOF
 
-      - name: Build Debug APK with fallback
+      - name: Build Debug APK with fallback and logging
         working-directory: android
         run: |
-          if ! ./gradlew assembleDebug; then
-            echo "First build failed – re-syncing Capacitor and rebuilding"
-            npx cap sync android
-            npx cap copy android
-            ./gradlew assembleDebug
+          echo "Starting first build..." | tee -a $LOG_FILE
+          if ! ./gradlew assembleDebug 2>&1 | tee -a $LOG_FILE; then
+            echo "First build failed – re-syncing Capacitor and rebuilding" | tee -a $LOG_FILE
+            npx cap sync android 2>&1 | tee -a $LOG_FILE
+            npx cap copy android 2>&1 | tee -a $LOG_FILE
+            ./gradlew assembleDebug 2>&1 | tee -a $LOG_FILE
           fi
+
+      - name: Show full build log
+        run: cat android/$LOG_FILE
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
