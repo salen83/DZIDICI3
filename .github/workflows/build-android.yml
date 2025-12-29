@@ -8,8 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    env:
-      LOG_FILE: build.log
 
     steps:
       - name: Checkout repo
@@ -29,8 +27,14 @@ jobs:
           ./scripts/react-optimize.sh
 
       - name: Build React (ignore eslint warnings)
+        run: CI=false npm run build
+
+      - name: Check build folder
         run: |
-          CI=false npm run build || echo "React build failed – continuing"
+          if [ ! -d ./build ]; then
+            echo "React build failed: ./build folder missing"
+            exit 1
+          fi
 
       - name: Install Capacitor
         run: npm install @capacitor/android @capacitor/cli
@@ -40,10 +44,19 @@ jobs:
           if [ ! -d android ]; then
             npx cap add android
           fi
+          npx cap sync android
 
       - name: Copy web assets
         run: npx cap copy android
 
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      # 🔥 Force single Kotlin version to avoid duplicates
       - name: Force single Kotlin version
         run: |
           cat <<'EOF' >> android/build.gradle
@@ -59,19 +72,9 @@ jobs:
           }
           EOF
 
-      - name: Build Debug APK with fallback and logging
+      - name: Build Debug APK
         working-directory: android
-        run: |
-          echo "Starting first build..." | tee -a $LOG_FILE
-          if ! ./gradlew assembleDebug 2>&1 | tee -a $LOG_FILE; then
-            echo "First build failed – re-syncing Capacitor and rebuilding" | tee -a $LOG_FILE
-            npx cap sync android 2>&1 | tee -a $LOG_FILE
-            npx cap copy android 2>&1 | tee -a $LOG_FILE
-            ./gradlew assembleDebug 2>&1 | tee -a $LOG_FILE
-          fi
-
-      - name: Show full build log
-        run: cat android/$LOG_FILE
+        run: ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
