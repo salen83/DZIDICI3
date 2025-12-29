@@ -42,31 +42,32 @@ jobs:
       - name: Copy web assets
         run: npx cap copy android
 
-      - name: Setup Java 21
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 17
           cache: gradle
 
-      # 🔁 PRVI POKUŠAJ BUILD-a (original)
-      - name: Build Debug APK (first try)
-        id: build1
+      # 🔥 Fix za Kotlin duplikate
+      - name: Force single Kotlin version
+        run: |
+          cat <<'EOF' >> android/build.gradle
+
+          subprojects {
+            configurations.all {
+              resolutionStrategy {
+                force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
+                force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22"
+                force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"
+              }
+            }
+          }
+          EOF
+
+      - name: Build Debug APK
         working-directory: android
         run: ./gradlew assembleDebug
-        continue-on-error: true
-
-      # 🔥 FALLBACK – samo ako je prvi build pao
-      - name: Fix Capacitor & retry build
-        if: steps.build1.outcome == 'failure'
-        working-directory: android
-        run: |
-          echo "First build failed – re-syncing Capacitor and rebuilding"
-          cd ..
-          npx cap sync android
-          cd android
-          ./gradlew clean
-          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
