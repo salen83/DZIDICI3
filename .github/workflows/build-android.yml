@@ -50,18 +50,15 @@ jobs:
         run: |
           # Forsiraj Kotlin 1.8.22 u build.gradle
           sed -i "s/ext.kotlin_version = .*/ext.kotlin_version = '1.8.22'/" android/build.gradle
-
           # Dodaj resolutionStrategy ako ne postoji
           if ! grep -q "resolutionStrategy.eachDependency" android/app/build.gradle; then
-cat << 'EOF' >> android/app/build.gradle
-configurations.all {
+            echo "configurations.all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.group == 'org.jetbrains.kotlin') {
             details.useVersion '1.8.22'
         }
     }
-}
-EOF
+}" >> android/app/build.gradle
           fi
 
       - name: Build APK
