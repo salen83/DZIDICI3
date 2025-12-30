@@ -29,10 +29,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install Capacitor CLI
+        run: npm install @capacitor/cli
+
       - name: Build React app
         run: |
-          # on CI, React build treats warnings as errors
-          # this disables that behavior
           CI=false npm run build
 
       - name: Sync Capacitor and Build Android
