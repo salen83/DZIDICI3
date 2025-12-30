@@ -1,13 +1,16 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-
 buildscript {
+    ext {
+        kotlin_version = "1.8.22"
+    }
+
     repositories {
         google()
         mavenCentral()
     }
+
     dependencies {
         classpath "com.android.tools.build:gradle:8.2.0"
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
@@ -16,14 +19,7 @@ allprojects {
         google()
         mavenCentral()
     }
-}
 
-/**
- * 🔥 KRITIČNO:
- * Forsiramo JEDNU Kotlin verziju i sprečavamo
- * kotlin-stdlib-jdk7 / jdk8 konflikte (1.6.x vs 1.8.x)
- */
-subprojects {
     configurations.all {
         resolutionStrategy {
             force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
