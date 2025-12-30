@@ -6,7 +6,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.2.0'
+        classpath "com.android.tools.build:gradle:8.2.0"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.22"
     }
 }
@@ -15,5 +15,20 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+}
+
+/**
+ * 🔥 KRITIČNO:
+ * Forsiramo JEDNU Kotlin verziju i sprečavamo
+ * kotlin-stdlib-jdk7 / jdk8 konflikte (1.6.x vs 1.8.x)
+ */
+subprojects {
+    configurations.all {
+        resolutionStrategy {
+            force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"
+        }
     }
 }
