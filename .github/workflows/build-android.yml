@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install Capacitor CLI
+        run: npm install @capacitor/cli
+
       - name: Build Android
         run: npx cap sync android && cd android && ./gradlew assembleDebug
 
