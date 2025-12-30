@@ -53,7 +53,7 @@ jobs:
 
           # Dodaj resolutionStrategy ako ne postoji
           if ! grep -q "resolutionStrategy.eachDependency" android/app/build.gradle; then
-            cat << 'EOF' >> android/app/build.gradle
+cat << 'EOF' >> android/app/build.gradle
 configurations.all {
     resolutionStrategy.eachDependency { DependencyResolveDetails details ->
         if (details.requested.group == 'org.jetbrains.kotlin') {
