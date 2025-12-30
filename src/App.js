@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useSwipeable } from "react-swipeable";
 
 import Screen1 from "./screens/Screen1";
@@ -25,14 +25,32 @@ const screens = [
 
 export default function App() {
   const [currentScreenIndex, setCurrentScreenIndex] = useState(0);
+  const screenRef = useRef(null);
+
+  const canSwipeLeft = () => {
+    if (!screenRef.current) return true;
+    return screenRef.current.scrollLeft + screenRef.current.clientWidth >=
+      screenRef.current.scrollWidth;
+  };
+
+  const canSwipeRight = () => {
+    if (!screenRef.current) return true;
+    return screenRef.current.scrollLeft <= 0;
+  };
 
   const swipeHandlers = useSwipeable({
-    onSwipedLeft: () =>
-      setCurrentScreenIndex((i) => Math.min(i + 1, screens.length - 1)),
-    onSwipedRight: () =>
-      setCurrentScreenIndex((i) => Math.max(i - 1, 0)),
+    onSwipedLeft: () => {
+      if (canSwipeLeft()) {
+        setCurrentScreenIndex((i) => Math.min(i + 1, screens.length - 1));
+      }
+    },
+    onSwipedRight: () => {
+      if (canSwipeRight()) {
+        setCurrentScreenIndex((i) => Math.max(i - 1, 0));
+      }
+    },
     trackMouse: true,
-    preventDefaultTouchmoveEvent: false, // dozvoljava pinch/zoom
+    preventDefaultTouchmoveEvent: false, // omogućava pinch/zoom
   });
 
   const renderScreen = () => {
@@ -70,7 +88,18 @@ export default function App() {
         ))}
       </div>
 
-      <div style={{ marginTop: "10px" }}>{renderScreen()}</div>
+      <div
+        ref={screenRef}
+        style={{
+          overflowX: "auto",       // horizontalni scroll dozvoljen unutar screena
+          overflowY: "auto",       // vertikalni scroll normalno
+          width: "100%",
+          height: "100%",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {renderScreen()}
+      </div>
     </div>
   );
 }
