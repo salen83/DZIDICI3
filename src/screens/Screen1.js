@@ -13,14 +13,37 @@ export default function Screen1() {
     setCountryColors(savedColors);
   }, []);
 
-  const formatDatum = (val) => {
+  // ✅ UNIVERZALNI NORMALIZER DATUMA (ISTI KAO U SCREEN3)
+  const normalizeDate = (val) => {
     if (!val) return '';
-    if (val.includes('.')) return val;
-    if (val.includes('/')) {
-      const [m, d, y] = (val || '').split('/');
-      return `${d.padStart(2,'0')}.${m.padStart(2,'0')}.${y}`;
+
+    // Excel date (broj)
+    if (!isNaN(val)) {
+      const date = new Date((val - 25569) * 86400 * 1000);
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      return `${d}.${m}.${y}`;
     }
-    return val;
+
+    const str = String(val).trim();
+
+    // DD.MM.YYYY
+    if (/^\d{2}\.\d{2}\.\d{4}$/.test(str)) return str;
+
+    // DD/MM/YYYY
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+      const [d, m, y] = str.split('/');
+      return `${d}.${m}.${y}`;
+    }
+
+    // YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+      const [y, m, d] = str.split('-');
+      return `${d}.${m}.${y}`;
+    }
+
+    return str;
   };
 
   const getCountryColor = (country) => {
@@ -51,7 +74,7 @@ export default function Screen1() {
 
       const newRows = data.map((r, i) => ({
         rb: rows.length + i + 1,
-        datum: formatDatum(String(r['datum'] ?? '')),
+        datum: normalizeDate(r['datum']),
         vreme: String(r['Time'] ?? ''),
         liga: r['Liga'] ?? '',
         home: r['Home'] ?? '',
@@ -72,7 +95,7 @@ export default function Screen1() {
   const deleteRow = (index) => {
     const copy = [...rows];
     copy.splice(index, 1);
-    copy.forEach((r, i) => r.rb = i + 1);
+    copy.forEach((r, i) => (r.rb = i + 1));
     setRows(copy);
     localStorage.setItem('rows', JSON.stringify(copy));
   };
