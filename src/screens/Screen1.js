@@ -13,11 +13,11 @@ export default function Screen1() {
     setCountryColors(savedColors);
   }, []);
 
-  // ✅ UNIVERZALNI NORMALIZER DATUMA (ISTI KAO U SCREEN3)
+  // ✅ NORMALIZACIJA DATUMA (SVE VARIJANTE → DD.MM.YYYY)
   const normalizeDate = (val) => {
     if (!val) return '';
 
-    // Excel date (broj)
+    // Excel serial number
     if (!isNaN(val)) {
       const date = new Date((val - 25569) * 86400 * 1000);
       const d = String(date.getDate()).padStart(2, '0');
@@ -44,6 +44,18 @@ export default function Screen1() {
     }
 
     return str;
+  };
+
+  // ✅ UZMI DATUM IZ EXCELA (Datum ili datum)
+  const getExcelDate = (row) => {
+    return (
+      row['Datum'] ??
+      row['datum'] ??
+      row['DATE'] ??
+      row['Date'] ??
+      row['date'] ??
+      ''
+    );
   };
 
   const getCountryColor = (country) => {
@@ -74,7 +86,7 @@ export default function Screen1() {
 
       const newRows = data.map((r, i) => ({
         rb: rows.length + i + 1,
-        datum: normalizeDate(r['datum']),
+        datum: normalizeDate(getExcelDate(r)),
         vreme: String(r['Time'] ?? ''),
         liga: r['Liga'] ?? '',
         home: r['Home'] ?? '',
