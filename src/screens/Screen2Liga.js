@@ -36,20 +36,20 @@ export default function Screen2Liga() {
       if (hg + ag >= 7) s.over7 += 1;
     });
 
-    return Object.values(stats).map(l => ({
-      ...l,
-      ggPct: Math.round((l.gg / l.games) * 100),
-      ngPct: Math.round((l.ng / l.games) * 100),
-      over2Pct: Math.round((l.over2 / l.games) * 100),
-      over7Pct: Math.round((l.over7 / l.games) * 100),
-      avgGoals: (l.goals / l.games).toFixed(2)
-    }));
+    return Object.values(stats)
+      .map(l => ({
+        ...l,
+        ggPct: Math.round((l.gg / l.games) * 100),
+        ngPct: Math.round((l.ng / l.games) * 100),
+        over2Pct: Math.round((l.over2 / l.games) * 100),
+        over7Pct: Math.round((l.over7 / l.games) * 100),
+        avgGoals: (l.goals / l.games).toFixed(2)
+      }))
+      .sort((a, b) => b.games - a.games); // sortiranje po broju odigranih mečeva
   }, [rows]);
 
   return (
     <div className="container">
-      <h2>Statistika po ligama</h2>
-
       <table>
         <thead>
           <tr>
