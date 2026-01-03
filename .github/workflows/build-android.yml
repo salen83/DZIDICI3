@@ -1,29 +1,3 @@
-
-Skip to content
-Navigation Menu
-salen83
-DZIDICI3
-
-Code
-Issues
-Pull requests
-Actions
-Projects
-Wiki
-Security
-Insights
-
-    Settings
-
-Build Android APK
-Update Screen1.js #89
-
-    All jobs
-
-Run details
-
-Workflow file for this run
-.github/workflows/build-android.yml at 07b90ea
 name: Build Android APK
 
 on:
