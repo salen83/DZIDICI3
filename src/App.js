@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 
 import Screen1 from "./screens/Screen1";
 import Screen2 from "./screens/Screen2";
@@ -28,18 +28,6 @@ const screens = [
 
 export default function App() {
   const [currentScreenIndex, setCurrentScreenIndex] = useState(0);
-  const screenRef = useRef(null);
-
-  const canSwipeLeft = () => {
-    if (!screenRef.current) return true;
-    return screenRef.current.scrollLeft + screenRef.current.clientWidth >=
-      screenRef.current.scrollWidth;
-  };
-
-  const canSwipeRight = () => {
-    if (!screenRef.current) return true;
-    return screenRef.current.scrollLeft <= 0;
-  };
 
   const renderScreen = () => {
     switch (screens[currentScreenIndex].key) {
