@@ -1,80 +1,70 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import * as XLSX from 'xlsx';
 import './Screen1.css';
+import { MatchesContext } from "../MatchesContext";
 
 export default function Screen1() {
-  const [rows, setRows] = useState([]);
+  const { rows, setRows, tickets, setTickets } = useContext(MatchesContext);
   const [countryColors, setCountryColors] = useState({});
 
+  // Učitavanje boja iz localStorage
   useEffect(() => {
-    const savedRows = JSON.parse(localStorage.getItem('rows')) || [];
     const savedColors = JSON.parse(localStorage.getItem('countryColors')) || {};
-    setRows(savedRows);
     setCountryColors(savedColors);
   }, []);
 
-  // ✅ NORMALIZACIJA DATUMA (SVE VARIJANTE → DD.MM.YYYY)
+  // Generisanje boja za nove zemlje kada rows promeni
+  useEffect(() => {
+    const newColors = { ...countryColors };
+    rows.forEach(r => {
+      const country = (r.liga || '').split(' ')[0] || r.liga;
+      if (country && !newColors[country]) {
+        let hash = 0;
+        for (let i = 0; i < country.length; i++) {
+          hash = country.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const hue = Math.abs(hash) % 360;
+        newColors[country] = `hsl(${hue}, 70%, 70%)`;
+      }
+    });
+    setCountryColors(newColors);
+    localStorage.setItem('countryColors', JSON.stringify(newColors));
+  }, [rows]);
+
+  // ===============================
+  // NORMALIZACIJA DATUMA (SVE VARIJANTE → DD.MM.YYYY)
+  // ===============================
   const normalizeDate = (val) => {
     if (!val) return '';
-
-    // Excel serial number
     if (!isNaN(val)) {
       const date = new Date((val - 25569) * 86400 * 1000);
-      const d = String(date.getDate()).padStart(2, '0');
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const y = date.getFullYear();
-      return `${d}.${m}.${y}`;
+      return `${String(date.getDate()).padStart(2,'0')}.${String(date.getMonth()+1).padStart(2,'0')}.${date.getFullYear()}`;
     }
-
     const str = String(val).trim();
-
-    // DD.MM.YYYY
     if (/^\d{2}\.\d{2}\.\d{4}$/.test(str)) return str;
-
-    // DD/MM/YYYY
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
-      const [d, m, y] = str.split('/');
+      const [d,m,y] = str.split('/');
       return `${d}.${m}.${y}`;
     }
-
-    // YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-      const [y, m, d] = str.split('-');
+      const [y,m,d] = str.split('-');
       return `${d}.${m}.${y}`;
     }
-
     return str;
   };
 
-  // ✅ UZMI DATUM IZ EXCELA (Datum ili datum)
   const getExcelDate = (row) => {
-    return (
-      row['Datum'] ??
-      row['datum'] ??
-      row['DATE'] ??
-      row['Date'] ??
-      row['date'] ??
-      ''
-    );
+    return row['Datum'] ?? row['datum'] ?? row['DATE'] ?? row['Date'] ?? row['date'] ?? '';
   };
 
   const getCountryColor = (country) => {
     if (!country) return '#ffffff';
-    if (countryColors[country]) return countryColors[country];
-
-    let hash = 0;
-    for (let i = 0; i < country.length; i++) {
-      hash = country.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const hue = Math.abs(hash) % 360;
-    const color = `hsl(${hue}, 70%, 70%)`;
-
-    const newColors = { ...countryColors, [country]: color };
-    setCountryColors(newColors);
-    localStorage.setItem('countryColors', JSON.stringify(newColors));
-    return color;
+    return countryColors[country] || '#ffffff';
   };
 
+  // ===============================
+  // EXCEL IMPORT
+  // ===============================
   const importExcel = (event) => {
     const file = event.target.files[0];
     const reader = new FileReader();
@@ -107,7 +97,7 @@ export default function Screen1() {
   const deleteRow = (index) => {
     const copy = [...rows];
     copy.splice(index, 1);
-    copy.forEach((r, i) => (r.rb = i + 1));
+    copy.forEach((r, i) => r.rb = i + 1);
     setRows(copy);
     localStorage.setItem('rows', JSON.stringify(copy));
   };
@@ -127,8 +117,8 @@ export default function Screen1() {
             <th style={{ width: '90px' }}>Away</th>
             <th style={{ width: '18px' }}>FT</th>
             <th style={{ width: '18px' }}>HT</th>
-            <th style={{ width: '18px' }}>SH</th>
-            <th style={{ width: '18px' }}></th>
+            <th style={{ width: '18px'}}>SH</th>
+            <th style={{ width: '18px'}}></th>
           </tr>
         </thead>
         <tbody>
@@ -151,9 +141,7 @@ export default function Screen1() {
                   <button
                     onClick={() => deleteRow(i)}
                     style={{ padding: '0', fontSize: '10px', height: '16px', width: '16px' }}
-                  >
-                    x
-                  </button>
+                  >x</button>
                 </td>
               </tr>
             );

@@ -1,5 +1,6 @@
 import React, { useContext, useMemo, useState } from "react";
 import { MatchesContext } from "../MatchesContext";
+import { calculateTicketInfluence } from "../ticketInfluence"; // uvoz funkcije
 
 /* helper: siguran procenat */
 const pct = (a, b, fallback = 50) => {
@@ -8,9 +9,12 @@ const pct = (a, b, fallback = 50) => {
 };
 
 export default function Screen4() {
-  const { rows, futureMatches } = useContext(MatchesContext);
+  const { rows, futureMatches, tickets } = useContext(MatchesContext); // dodajemo tickets
   const [selectedH2H, setSelectedH2H] = useState(null);
 
+  // ===============================
+  // STATISTIKA TIMOVA
+  // ===============================
   const teamStats = useMemo(() => {
     const stats = {};
     rows.forEach(r => {
@@ -26,7 +30,7 @@ export default function Screen4() {
       stats[r.home].goalsFor += hg; stats[r.home].goalsAgainst += ag;
       stats[r.away].goalsFor += ag; stats[r.away].goalsAgainst += hg;
 
-      if (hg>0 && ag>0) { stats[r.home].gg++; stats[r.away].gg++; } 
+      if (hg>0 && ag>0) { stats[r.home].gg++; stats[r.away].gg++; }
       else { stats[r.home].ng++; stats[r.away].ng++; }
       if (hg+ag>=2) { stats[r.home].over2++; stats[r.away].over2++; }
       if (hg+ag>=7) { stats[r.home].over7++; stats[r.away].over7++; }
@@ -34,6 +38,9 @@ export default function Screen4() {
     return stats;
   }, [rows]);
 
+  // ===============================
+  // STATISTIKA LIGA
+  // ===============================
   const leagueStats = useMemo(() => {
     const stats = {};
     rows.forEach(r => {
@@ -50,6 +57,9 @@ export default function Screen4() {
     return stats;
   }, [rows]);
 
+  // ===============================
+  // H2H MAPA
+  // ===============================
   const h2hMap = useMemo(() => {
     const map = {};
     rows.forEach(r => {
@@ -68,6 +78,17 @@ export default function Screen4() {
     return map;
   }, [rows]);
 
+  // ===============================
+  // KALKULACIJA UTICAJA TIKETA
+  // ===============================
+  const ticketMap = useMemo(() => {
+    if (!tickets) return {};
+    return calculateTicketInfluence(tickets); // vraća { tim: { tip: uticaj } }
+  }, [tickets]);
+
+  // ===============================
+  // PREDIKCIJA
+  // ===============================
   const predict = (m) => {
     const home = teamStats[m.home] || {};
     const away = teamStats[m.away] || {};
@@ -87,11 +108,23 @@ export default function Screen4() {
     const h2hGG = h2h ? pct(h2h.filter(x=>x.hg>0 && x.ag>0).length, h2h.length,50) : 50;
 
     const wForm=0.5, wLeague=0.3, wH2H=0.2;
+
+    // === dodaj uticaj tiketa ===
+    const tiGG = (ticketMap[m.home]?.gg || 0) + (ticketMap[m.away]?.gg || 0);
+    const tiNG = (ticketMap[m.home]?.ng || 0) + (ticketMap[m.away]?.ng || 0);
+    const tiOver2 = (ticketMap[m.home]?.over2 || 0) + (ticketMap[m.away]?.over2 || 0);
+    const tiOver7 = (ticketMap[m.home]?.over7 || 0) + (ticketMap[m.away]?.over7 || 0);
+
+    const ggPct = Math.round(wForm*formGG + wLeague*leagueGG + wH2H*h2hGG + tiGG);
+    const ngPct = Math.round(wForm*formNG + wLeague*leagueNG + wH2H*(100-h2hGG) + tiNG);
+    const over2Pct = Math.round(wForm*formOver2 + wLeague*leagueOver2 + wH2H*50 + tiOver2);
+    const over7Pct = Math.round(wForm*formOver7 + wLeague*leagueOver7 + wH2H*5 + tiOver7);
+
     return {
-      gg: Math.round(wForm*formGG + wLeague*leagueGG + wH2H*h2hGG),
-      ng: Math.round(wForm*formNG + wLeague*leagueNG + wH2H*(100-h2hGG)),
-      over2: Math.round(wForm*formOver2 + wLeague*leagueOver2 + wH2H*50),
-      over7: Math.round(wForm*formOver7 + wLeague*leagueOver7 + wH2H*5),
+      gg: ggPct,
+      ng: ngPct,
+      over2: over2Pct,
+      over7: over7Pct,
       avgHome: pct(home.goalsFor, home.games,1),
       avgAway: pct(away.goalsFor, away.games,1),
       h2hGG: Math.round(h2hGG)

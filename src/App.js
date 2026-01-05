@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 
 import Screen1 from "./screens/Screen1";
 import Screen2 from "./screens/Screen2";
@@ -10,6 +10,9 @@ import Screen6 from "./screens/Screen6";
 import Screen7 from "./screens/Screen7";
 import Screen8 from "./screens/Screen8";
 import Screen9 from "./screens/Screen9";
+
+import { MatchesProvider } from "./MatchesContext";
+import TicketPanel from "./components/TicketPanel";
 
 import "./App.css";
 
@@ -46,7 +49,7 @@ export default function App() {
   };
 
   return (
-    <div>
+    <MatchesProvider>
       <div className="top-bar">
         <button
           onClick={() => setCurrentScreenIndex(i => Math.max(i - 1, 0))}
@@ -68,6 +71,9 @@ export default function App() {
       <div className="screen-container">
         {renderScreen()}
       </div>
-    </div>
+
+      {/* TicketPanel uvek vidljiv */}
+      <TicketPanel />
+    </MatchesProvider>
   );
 }
