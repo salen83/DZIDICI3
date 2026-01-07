@@ -13,34 +13,10 @@
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <title>React App</title>
     <style>
-      /* PATCH MEMORIJA: HORIZONTAL SCROLL UNUTAR SCREEN-A */
-      body, html {
+      /* MINIMALNI CSS: samo osnovni reset */
+      body {
         margin: 0;
         padding: 0;
-        width: 100%;
-        height: 100%;
-        overflow-y: auto;  /* VERTIKALNO SKROL */
-        overflow-x: hidden; /* SPREČAVA SPORADICNI HORIZONTALNI SCROLL BODY */
-      }
-
-      #root {
-        width: 100%;
-        height: 100%;
-      }
-
-      .screen-wrapper {
-        display: flex;
-        flex-direction: row; /* horizontalni layout */
-        overflow-x: auto;    /* horizontalno pomeranje */
-        scroll-snap-type: x mandatory; /* snap za screen-ove */
-        -webkit-overflow-scrolling: touch;
-      }
-
-      .screen {
-        flex: 0 0 100vw; /* svaka "screen" zauzima celu širinu ekrana */
-        height: 100%;
-        scroll-snap-align: start; /* snap pozicija */
-        overflow-y: auto; /* unutrašnji vertikalni skrol ako sadržaj veći od visine */
       }
     </style>
   </head>
