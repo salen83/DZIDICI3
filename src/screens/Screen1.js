@@ -9,8 +9,16 @@ export default function Screen1() {
   const tableWrapperRef = useRef(null);
   const [scrollTop, setScrollTop] = useState(0);
 
-  const rowHeight = 35; // visina jednog reda
-  const buffer = 20;    // dodatni redovi izvan viewa
+  const rowHeight = 35;
+  const buffer = 20;
+
+  // Columns width state (resizable)
+  const [colWidths, setColWidths] = useState({
+    rb: 40, datum: 80, vreme: 60, liga: 120, home: 120, away: 120, ft: 40, ht: 40, sh: 40, delete: 40
+  });
+  const resizingCol = useRef(null);
+  const startX = useRef(0);
+  const startWidth = useRef(0);
 
   // Load saved colors
   useEffect(() => {
@@ -59,7 +67,6 @@ export default function Screen1() {
   const getExcelDate = row => row?.['Datum'] ?? row?.['datum'] ?? row?.['DATE'] ?? row?.['Date'] ?? row?.['date'] ?? '';
   const getCountryColor = country => countryColors[country] || '#fff';
 
-  // Excel import
   const importExcel = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -88,41 +95,50 @@ export default function Screen1() {
     reader.readAsBinaryString(file);
   };
 
-  // Add new row
   const addNewRow = () => {
-    const newRow = {
-      rb: 0,
-      datum: '',
-      vreme: '',
-      liga: '',
-      home: '',
-      away: '',
-      ft: '',
-      ht: '',
-      sh: ''
-    };
+    const newRow = { rb:0, datum:'', vreme:'', liga:'', home:'', away:'', ft:'', ht:'', sh:'' };
     const newRows = [newRow, ...rows];
     newRows.forEach((r,i)=>r.rb=i+1);
     setRows(newRows);
     localStorage.setItem('rows', JSON.stringify(newRows));
   };
 
-  const deleteRow = index => {
+  const deleteRow = (index) => {
     const copy = [...rows];
-    copy.splice(index, 1);
+    copy.splice(index,1);
     copy.forEach((r,i)=>r.rb=i+1);
     setRows(copy);
     localStorage.setItem('rows', JSON.stringify(copy));
   };
 
-  const handleCellChange = (i, key, value) => {
+  const handleCellChange = (rowIdx,key,value) => {
     const copy = [...rows];
-    copy[i][key] = value;
+    copy[rowIdx][key] = value;
     setRows(copy);
     localStorage.setItem('rows', JSON.stringify(copy));
   };
 
-  // Virtualization
+  const startResize = (e, colKey) => {
+    resizingCol.current = colKey;
+    startX.current = e.touches ? e.touches[0].clientX : e.clientX;
+    startWidth.current = colWidths[colKey];
+    e.preventDefault();
+  };
+
+  const onResize = (e) => {
+    if (!resizingCol.current) return;
+    const currentX = e.touches ? e.touches[0].clientX : e.clientX;
+    const delta = currentX - startX.current;
+    setColWidths(prev => ({
+      ...prev,
+      [resizingCol.current]: Math.max(20, startWidth.current + delta) // minimum 20px
+    }));
+  };
+
+  const endResize = () => {
+    resizingCol.current = null;
+  };
+
   const handleScroll = useCallback((e) => {
     setScrollTop(e.target.scrollTop);
   }, []);
@@ -133,8 +149,12 @@ export default function Screen1() {
   const endIndex = Math.min(totalRows, Math.ceil((scrollTop + containerHeight)/rowHeight) + buffer);
   const visibleRows = rows?.slice(startIndex, endIndex);
 
+  const columnKeys = ['rb','datum','vreme','liga','home','away','ft','ht','sh','delete'];
+
   return (
-    <div className="screen1-container">
+    <div className="screen1-container"
+         onTouchMove={onResize}
+         onTouchEnd={endResize}>
       <div className="screen1-topbar">
         <input type="file" accept=".xls,.xlsx" onChange={importExcel} />
         <button onClick={addNewRow}>Dodaj novi mec</button>
@@ -149,16 +169,24 @@ export default function Screen1() {
         <table className="screen1-table">
           <thead>
             <tr>
-              <th className="col-min">#</th>
-              <th>Datum</th>
-              <th>Vreme</th>
-              <th>Liga</th>
-              <th>Home</th>
-              <th>Away</th>
-              <th>FT</th>
-              <th>HT</th>
-              <th>SH</th>
-              <th className="col-min"></th>
+              {columnKeys.map(key => (
+                <th key={key} style={{width: colWidths[key], position:'relative', minWidth:20, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                  {key === 'rb' ? '#' :
+                   key==='datum' ? 'Datum' :
+                   key==='vreme' ? 'Vreme' :
+                   key==='liga' ? 'Liga' :
+                   key==='home' ? 'Home' :
+                   key==='away' ? 'Away' :
+                   key==='ft' ? 'FT' :
+                   key==='ht' ? 'HT' :
+                   key==='sh' ? 'SH' : ''}
+                  {key !== 'delete' &&
+                    <div style={{position:'absolute', right:0, top:0, width:10, height:'100%', touchAction:'none'}} 
+                         onTouchStart={e=>startResize(e,key)}
+                         onMouseDown={e=>startResize(e,key)}></div>
+                  }
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -167,24 +195,19 @@ export default function Screen1() {
               const idx = startIndex + i;
               const country = (r.liga || '').split(' ')[0] || r.liga;
               const color = getCountryColor(country);
+              const cellStyle = {overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'};
               return (
                 <tr key={idx}>
-                  <td className="col-min">{r.rb}</td>
-                  <td><input value={r.datum} onChange={e=>handleCellChange(idx,'datum',e.target.value)} /></td>
-                  <td><input value={r.vreme} onChange={e=>handleCellChange(idx,'vreme',e.target.value)} /></td>
-                  <td style={{ backgroundColor: color, fontWeight: 'bold' }}>
-                    <input value={r.liga} onChange={e=>handleCellChange(idx,'liga',e.target.value)} />
-                  </td>
-                  <td style={{ backgroundColor: color, fontWeight: 'bold' }}>
-                    <input value={r.home} onChange={e=>handleCellChange(idx,'home',e.target.value)} />
-                  </td>
-                  <td style={{ backgroundColor: color, fontWeight: 'bold' }}>
-                    <input value={r.away} onChange={e=>handleCellChange(idx,'away',e.target.value)} />
-                  </td>
-                  <td className="col-min"><input value={r.ft} onChange={e=>handleCellChange(idx,'ft',e.target.value)} /></td>
-                  <td className="col-min"><input value={r.ht} onChange={e=>handleCellChange(idx,'ht',e.target.value)} /></td>
-                  <td className="col-min"><input value={r.sh} onChange={e=>handleCellChange(idx,'sh',e.target.value)} /></td>
-                  <td className="col-min"><button onClick={()=>deleteRow(idx)}>x</button></td>
+                  <td style={{...cellStyle, width: colWidths.rb}}>{r.rb}</td>
+                  <td style={{...cellStyle, width: colWidths.datum}}><input value={r.datum} onChange={e=>handleCellChange(idx,'datum',e.target.value)} style={{width:'100%'}} /></td>
+                  <td style={{...cellStyle, width: colWidths.vreme}}><input value={r.vreme} onChange={e=>handleCellChange(idx,'vreme',e.target.value)} style={{width:'100%'}} /></td>
+                  <td style={{...cellStyle, width: colWidths.liga, backgroundColor:color, fontWeight:'bold'}}><input value={r.liga} onChange={e=>handleCellChange(idx,'liga',e.target.value)} style={{width:'100%'}} /></td>
+                  <td style={{...cellStyle, width: colWidths.home, backgroundColor:color, fontWeight:'bold'}}><input value={r.home} onChange={e=>handleCellChange(idx,'home',e.target.value)} style={{width:'100%'}} /></td>
+                  <td style={{...cellStyle, width: colWidths.away, backgroundColor:color, fontWeight:'bold'}}><input value={r.away} onChange={e=>handleCellChange(idx,'away',e.target.value)} style={{width:'100%'}} /></td>
+                  <td style={{...cellStyle, width: colWidths.ft}}><input value={r.ft} onChange={e=>handleCellChange(idx,'ft',e.target.value)} style={{width:'100%'}} /></td>
+                  <td style={{...cellStyle, width: colWidths.ht}}><input value={r.ht} onChange={e=>handleCellChange(idx,'ht',e.target.value)} style={{width:'100%'}} /></td>
+                  <td style={{...cellStyle, width: colWidths.sh}}><input value={r.sh} onChange={e=>handleCellChange(idx,'sh',e.target.value)} style={{width:'100%'}} /></td>
+                  <td style={{width: colWidths.delete}}><button onClick={()=>deleteRow(idx)}>x</button></td>
                 </tr>
               );
             })}
