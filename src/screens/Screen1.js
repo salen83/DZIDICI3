@@ -12,7 +12,6 @@ export default function Screen1() {
   const rowHeight = 35;
   const buffer = 20;
 
-  // Columns width state (resizable)
   const [colWidths, setColWidths] = useState({
     rb: 40, datum: 80, vreme: 60, liga: 120, home: 120, away: 120, ft: 40, ht: 40, sh: 40, delete: 40
   });
@@ -20,13 +19,11 @@ export default function Screen1() {
   const startX = useRef(0);
   const startWidth = useRef(0);
 
-  // Load saved colors
   useEffect(() => {
     const savedColors = JSON.parse(localStorage.getItem('countryColors') || '{}');
     setCountryColors(savedColors);
   }, []);
 
-  // Generate colors for new countries
   useEffect(() => {
     if (!rows) return;
     const newColors = { ...countryColors };
@@ -67,6 +64,14 @@ export default function Screen1() {
   const getExcelDate = row => row?.['Datum'] ?? row?.['datum'] ?? row?.['DATE'] ?? row?.['Date'] ?? row?.['date'] ?? '';
   const getCountryColor = country => countryColors[country] || '#fff';
 
+  const sortRowsByDateDesc = (rowsToSort) => {
+    return [...rowsToSort].sort((a,b)=>{
+      const dateA = a.datum.split('.').reverse().join('-'); // yyyy-mm-dd
+      const dateB = b.datum.split('.').reverse().join('-');
+      return dateB.localeCompare(dateA);
+    });
+  };
+
   const importExcel = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -88,7 +93,8 @@ export default function Screen1() {
         sh: r['SH'] ?? '',
       }));
 
-      const allRows = [...rows, ...newRows];
+      const allRows = sortRowsByDateDesc([...rows, ...newRows]);
+      allRows.forEach((r,i)=>r.rb=i+1);
       setRows(allRows);
       localStorage.setItem('rows', JSON.stringify(allRows));
     };
@@ -97,7 +103,9 @@ export default function Screen1() {
 
   const addNewRow = () => {
     const newRow = { rb:0, datum:'', vreme:'', liga:'', home:'', away:'', ft:'', ht:'', sh:'' };
-    const newRows = [newRow, ...rows];
+    // Novi red ide uvek na vrh, ostali sortirani po datumu
+    const sortedExisting = sortRowsByDateDesc(rows);
+    const newRows = [newRow, ...sortedExisting];
     newRows.forEach((r,i)=>r.rb=i+1);
     setRows(newRows);
     localStorage.setItem('rows', JSON.stringify(newRows));
@@ -114,8 +122,10 @@ export default function Screen1() {
   const handleCellChange = (rowIdx,key,value) => {
     const copy = [...rows];
     copy[rowIdx][key] = value;
-    setRows(copy);
-    localStorage.setItem('rows', JSON.stringify(copy));
+    const sorted = sortRowsByDateDesc(copy);
+    sorted.forEach((r,i)=>r.rb=i+1);
+    setRows(sorted);
+    localStorage.setItem('rows', JSON.stringify(sorted));
   };
 
   const startResize = (e, colKey) => {
@@ -131,17 +141,12 @@ export default function Screen1() {
     const delta = currentX - startX.current;
     setColWidths(prev => ({
       ...prev,
-      [resizingCol.current]: Math.max(20, startWidth.current + delta) // minimum 20px
+      [resizingCol.current]: Math.max(0, startWidth.current + delta)
     }));
   };
 
-  const endResize = () => {
-    resizingCol.current = null;
-  };
-
-  const handleScroll = useCallback((e) => {
-    setScrollTop(e.target.scrollTop);
-  }, []);
+  const endResize = () => { resizingCol.current = null; };
+  const handleScroll = useCallback((e) => { setScrollTop(e.target.scrollTop); }, []);
 
   const containerHeight = 600;
   const totalRows = rows?.length || 0;
@@ -162,7 +167,7 @@ export default function Screen1() {
 
       <div
         className="screen1-table-wrapper"
-        style={{ height: containerHeight, overflowY: 'auto' }}
+        style={{ height: containerHeight, overflowY: 'auto', width:'98%', margin:'0 auto' }}
         ref={tableWrapperRef}
         onScroll={handleScroll}
       >
@@ -170,7 +175,7 @@ export default function Screen1() {
           <thead>
             <tr>
               {columnKeys.map(key => (
-                <th key={key} style={{width: colWidths[key], position:'relative', minWidth:20, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                <th key={key} style={{width: colWidths[key], position:'relative', minWidth:0, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
                   {key === 'rb' ? '#' :
                    key==='datum' ? 'Datum' :
                    key==='vreme' ? 'Vreme' :
@@ -181,9 +186,12 @@ export default function Screen1() {
                    key==='ht' ? 'HT' :
                    key==='sh' ? 'SH' : ''}
                   {key !== 'delete' &&
-                    <div style={{position:'absolute', right:0, top:0, width:10, height:'100%', touchAction:'none'}} 
-                         onTouchStart={e=>startResize(e,key)}
-                         onMouseDown={e=>startResize(e,key)}></div>
+                    <div style={{
+                      position:'absolute', right:0, top:0, width:20, height:'100%', touchAction:'none', cursor:'col-resize',
+                      display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'#333'
+                    }}
+                    onTouchStart={e=>startResize(e,key)}
+                    onMouseDown={e=>startResize(e,key)}>⇔</div>
                   }
                 </th>
               ))}
