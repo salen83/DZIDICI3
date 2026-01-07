@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-
+import React, { useState } from "react";             
 import Screen1 from "./screens/Screen1";
 import Screen2 from "./screens/Screen2";
 import Screen2Liga from "./screens/Screen2Liga";
@@ -13,7 +12,6 @@ import Screen9 from "./screens/Screen9";
 
 import { MatchesProvider } from "./MatchesContext";
 import TicketPanel from "./components/TicketPanel";
-
 import "./App.css";
 
 const screens = [
@@ -50,30 +48,31 @@ export default function App() {
 
   return (
     <MatchesProvider>
-      <div className="top-bar">
-        <button
-          onClick={() => setCurrentScreenIndex(i => Math.max(i - 1, 0))}
-          disabled={currentScreenIndex === 0}
-        >
-          ◀
-        </button>
+      {/* Pomeri celu aplikaciju malo dole */}
+      <div style={{ paddingTop: "30px" }}>
+        <div className="top-bar">
+          <button
+            onClick={() => setCurrentScreenIndex(i => Math.max(i - 1, 0))}
+            disabled={currentScreenIndex === 0}
+          >
+            ◀
+          </button>
+          <span>{screens[currentScreenIndex].title}</span>
+          <button
+            onClick={() => setCurrentScreenIndex(i => Math.min(i + 1, screens.length - 1))}
+            disabled={currentScreenIndex === screens.length - 1}
+          >
+            ▶
+          </button>
+        </div>
 
-        <span>{screens[currentScreenIndex].title}</span>
+        <div className="screen-container">
+          {renderScreen()}
+        </div>
 
-        <button
-          onClick={() => setCurrentScreenIndex(i => Math.min(i + 1, screens.length - 1))}
-          disabled={currentScreenIndex === screens.length - 1}
-        >
-          ▶
-        </button>
+        {/* TicketPanel uvek vidljiv */}
+        <TicketPanel />
       </div>
-
-      <div className="screen-container">
-        {renderScreen()}
-      </div>
-
-      {/* TicketPanel uvek vidljiv */}
-      <TicketPanel />
     </MatchesProvider>
   );
 }
