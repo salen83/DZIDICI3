@@ -1,29 +1,35 @@
 // ticketInfluence.js
-// Računa uticaj tiketa na predikcije
+// Računa kumulativni uticaj tiketa na predikcije (po timu, vremenski, max poslednjih 100 tiketa)
 
 export function calculateTicketInfluence(tickets) {
   const influenceMap = {}; // { tim: { tip: cumulativeEffect } }
 
-  // redosled po datumu: prvo stari tiketi
-  const allTickets = [...tickets.dobitni, ...tickets.gubitni].sort((a,b) => new Date(a.date) - new Date(b.date));
+  // Kombinujemo dobitne i gubitne tikete po datumu (stari prvi)
+  const allTickets = [...tickets.dobitni, ...tickets.gubitni]
+    .sort((a,b) => new Date(a.date) - new Date(b.date))
+    .slice(-100); // uzimamo poslednjih 100 tiketa
 
+  // Prolazimo kroz sve tikete
   allTickets.forEach(ticket => {
-    const isWin = ticket.status === "win" ? 1 : -1; // +1 ako je prošao, -1 ako nije
     ticket.matches.forEach(match => {
-      if (!influenceMap[match.home]) influenceMap[match.home] = {};
-      if (!influenceMap[match.away]) influenceMap[match.away] = {};
-      if (!influenceMap[match.home][match.tip]) influenceMap[match.home][match.tip] = 0;
-      if (!influenceMap[match.away][match.tip]) influenceMap[match.away][match.tip] = 0;
+      const { home, away, tip } = match;
+      const isWin = ticket.status === "win" ? 1 : -1; // +1 ako je prošao, -1 ako nije
 
-      // +3% ili -3% po timu i tipu
-      influenceMap[match.home][match.tip] += 3 * isWin;
-      influenceMap[match.away][match.tip] += 3 * isWin;
+      // Inicijalizacija mapa za timove i tipove
+      if (!influenceMap[home]) influenceMap[home] = {};
+      if (!influenceMap[away]) influenceMap[away] = {};
+      if (!influenceMap[home][tip]) influenceMap[home][tip] = 0;
+      if (!influenceMap[away][tip]) influenceMap[away][tip] = 0;
 
-      // plafoniranje ±30%
-      if (influenceMap[match.home][match.tip] > 30) influenceMap[match.home][match.tip] = 30;
-      if (influenceMap[match.home][match.tip] < -30) influenceMap[match.home][match.tip] = -30;
-      if (influenceMap[match.away][match.tip] > 30) influenceMap[match.away][match.tip] = 30;
-      if (influenceMap[match.away][match.tip] < -30) influenceMap[match.away][match.tip] = -30;
+      // Dodavanje efekta po timu, kumulativno
+      influenceMap[home][tip] += 3 * isWin;
+      influenceMap[away][tip] += 3 * isWin;
+
+      // Plafoniranje ±15% po timu i tipu
+      if (influenceMap[home][tip] > 15) influenceMap[home][tip] = 15;
+      if (influenceMap[home][tip] < -15) influenceMap[home][tip] = -15;
+      if (influenceMap[away][tip] > 15) influenceMap[away][tip] = 15;
+      if (influenceMap[away][tip] < -15) influenceMap[away][tip] = -15;
     });
   });
 

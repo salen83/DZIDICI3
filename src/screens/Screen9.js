@@ -20,7 +20,7 @@ export default function Screen9() {
 
       prev.otvoreni.forEach(ticket => {
         let allChecked = true;
-        let allPassed = true;
+        let lostFlag = false;
 
         const updatedMatches = ticket.matches.map(m => {
           const r = rows.find(row =>
@@ -43,19 +43,19 @@ export default function Screen9() {
           if (m.tip === "2+") passed = hg + ag >= 2;
           if (m.tip === "7+") passed = hg + ag >= 7;
 
-          if (!passed) allPassed = false;
+          if (!passed) lostFlag = true;
 
           return { ...m, rezultat: r.ft, status: passed ? "win" : "lose" };
         });
 
         const newTicket = { ...ticket, matches: updatedMatches };
 
-        if (!allChecked) {
-          opened.push(newTicket);
-        } else if (allPassed) {
-          won.push({ ...newTicket, status: "win" });
-        } else {
+        if (lostFlag) {
           lost.push({ ...newTicket, status: "lose" });
+        } else if (!allChecked) {
+          opened.push(newTicket);
+        } else {
+          won.push({ ...newTicket, status: "win" });
         }
       });
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";             
+import React, { useState } from "react";
 import Screen1 from "./screens/Screen1";
 import Screen2 from "./screens/Screen2";
 import Screen2Liga from "./screens/Screen2Liga";
@@ -9,6 +9,9 @@ import Screen6 from "./screens/Screen6";
 import Screen7 from "./screens/Screen7";
 import Screen8 from "./screens/Screen8";
 import Screen9 from "./screens/Screen9";
+import Screen10 from "./screens/Screen10";
+import Screen11 from "./screens/Screen11";
+import Screen12 from "./screens/Screen12";
 
 import { MatchesProvider } from "./MatchesContext";
 import TicketPanel from "./components/TicketPanel";
@@ -25,6 +28,9 @@ const screens = [
   { key: "screen7", title: "Rang 2+" },
   { key: "screen8", title: "Rang 7+" },
   { key: "screen9", title: "Tiketi" },
+  { key: "screen10", title: "Poisson Stats" },
+  { key: "screen11", title: "Hybrid+Poisson" },
+  { key: "screen12", title: "Final Mixer" }
 ];
 
 export default function App() {
@@ -42,13 +48,15 @@ export default function App() {
       case "screen7": return <Screen7 />;
       case "screen8": return <Screen8 />;
       case "screen9": return <Screen9 />;
+      case "screen10": return <Screen10 />;
+      case "screen11": return <Screen11 />;
+      case "screen12": return <Screen12 />;
       default: return <Screen1 />;
     }
   };
 
   return (
     <MatchesProvider>
-      {/* Pomeri celu aplikaciju malo dole */}
       <div style={{ paddingTop: "30px" }}>
         <div className="top-bar">
           <button
@@ -70,7 +78,6 @@ export default function App() {
           {renderScreen()}
         </div>
 
-        {/* TicketPanel uvek vidljiv */}
         <TicketPanel />
       </div>
     </MatchesProvider>
